@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>BrickBurst</title>
+<meta name="description" content="BrickBurst is a colorful browser Breakout game with 30 levels, daily challenges, unlockable cosmetics and gameplay insights. Play free on desktop or phone.">
+<style>
+:root{--bg:#f1f0fa;--fg:#1d1a3a;--panel:#191641;--btn:#ff4f8b;--btn-fg:#fff;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0e0c22;--fg:#f1f0fa}}
+:root[data-theme="dark"]{--bg:#0e0c22;--fg:#f1f0fa}
+html,body{margin:0;background:var(--bg);color:var(--fg);font-family:"Trebuchet MS",Verdana,sans-serif}
+body{display:flex;flex-direction:column;align-items:center;padding:12px}
+h1{margin:0 0 8px;font-size:2rem;letter-spacing:.04em}
+.bar{width:100%;max-width:720px;display:flex;flex-wrap:wrap;gap:8px 16px;justify-content:space-between;align-items:center;margin-bottom:10px;font-weight:700}
+.btns{display:flex;gap:8px}
+button{font:inherit;font-weight:700;background:var(--btn);color:var(--btn-fg);border:0;border-radius:999px;padding:6px 16px;cursor:pointer}
+button:focus-visible{outline:3px solid var(--fg);outline-offset:2px}
+canvas{width:100%;max-width:720px;aspect-ratio:3/2;background:var(--panel);border-radius:12px;cursor:none;touch-action:none;display:block}
+p{max-width:720px;margin:10px 0 0;text-align:center;font-size:.9rem;opacity:.8}
+
+dialog{color:#f1f0fa;background:#191641;border:0;border-radius:20px;padding:24px;width:min(720px,calc(100% - 64px));max-height:88dvh;overflow:auto;text-align:center;box-shadow:0 24px 100px #0008}
+dialog::backdrop{background:#09071bc9}dialog h2{margin:0 0 6px;font-size:clamp(1.6rem,4vw,2.2rem)}
+.sub{color:#cbc7df;margin-bottom:16px;font-size:.95rem}.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.stat{background:#302b55;border-radius:13px;padding:14px 4px}.stat strong{display:block;font-size:1.65rem}.stat span{display:block;color:#cbc7df;font-size:.8rem;margin-top:5px}
+.result-chart h3{font-size:1rem;margin:20px 0 8px}.level-bars{display:flex;gap:14px;height:145px;align-items:end;padding:0 15px}.level-bar{flex:1;min-width:0;font-size:.8rem}.level-bar i{display:block;width:85%;margin:6px auto 8px;border-radius:10px 10px 5px 5px}.level-bar small{color:#c8c3df}.miss-strip{display:flex;gap:3px;height:30px;border-radius:10px;overflow:hidden}.miss-cell{flex:1;display:flex;align-items:center;justify-content:center;font-size:.8rem;font-weight:bold}.strip-labels{display:flex;justify-content:space-between;color:#cbc7df;font-size:.75rem;margin-top:5px}.insight{margin:10px 0 0;color:#ded9ee;font-size:.9rem}.badge{display:inline-block;color:#8af1d2;background:#253d43;border-radius:99px;padding:6px 12px;font-size:.8rem;margin-top:14px}.tip{color:#fff2b6;font-size:.9rem;margin:12px 0;line-height:1.4}.actions{display:flex;justify-content:center;gap:10px;margin-top:14px}.secondary{background:#403967;font-size:.8rem}button{padding:9px 16px}.portfolio{max-width:720px;color:var(--fg);margin:12px 0;font-size:.75rem;text-align:center;opacity:.7}
+@media(max-width:540px){dialog{padding:18px;width:calc(100% - 52px)}.stats{grid-template-columns:repeat(2,1fr)}.stat{padding:10px 4px}.stat strong{font-size:1.4rem}.level-bars{gap:6px;padding:0;height:125px}.bar{font-size:.85rem}.btns{flex-wrap:wrap}.sub{font-size:.85rem}}
+.hotspot-wrap{max-width:390px;margin:auto}.hotspot-court{position:relative;background:#100e28;border:1px solid #51496f;border-radius:12px;padding:8px;overflow:hidden}.hotspot-grid{display:grid;grid-template-columns:repeat(12,1fr);gap:3px;aspect-ratio:3/2}.hotspot-cell{border-radius:4px;position:relative}.hotspot-cell.hottest{outline:2px solid #fff;outline-offset:-2px;box-shadow:0 0 12px #ffd66b80}.hotspot-cell.hottest::after{content:'★';position:absolute;inset:0;display:grid;place-items:center;color:#211638;font-size:clamp(10px,2vw,17px)}.court-top,.court-bottom{position:absolute;left:50%;transform:translateX(-50%);pointer-events:none;background:#100e28c9;color:#fff;font-size:.6rem;letter-spacing:.12em;padding:3px 9px;border-radius:5px}.court-top{top:10px}.court-bottom{bottom:10px;border-bottom:3px solid #fff}.heat-key{display:flex;align-items:center;justify-content:center;gap:8px;color:#cbc7df;font-size:.7rem;margin:9px 0}.heat-ramp{width:100px;height:7px;border-radius:99px;background:linear-gradient(90deg,#272344,#7753b0,#f564a1,#ffdc75)}.hotspot-note{font-size:.85rem;color:#ded9ee;margin-top:6px;line-height:1.4}
+.results-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:16px}.results-grid .result-chart{background:#25204f;border:1px solid #403967;border-radius:14px;padding:14px;min-width:0}.results-grid .result-chart h3{margin-top:0}.results-grid .hotspot-wrap{max-width:none;margin:0}.results-grid .full{grid-column:1/-1}.contact{display:flex;gap:6px;align-items:end;height:110px;margin-top:15px}.contact div{flex:1;text-align:center;font-size:.7rem;color:#d5cfee}.contact i{display:block;background:#70e6cb;border-radius:5px 5px 0 0;min-height:3px;margin-bottom:7px}.history{display:flex;align-items:end;gap:8px;height:115px;margin:15px 0 8px}.attempt{flex:1;min-width:0;text-align:center;font-size:.7rem;color:#c8c3e2}.attempt i{display:block;background:#a78bfa;border-radius:5px 5px 0 0;margin:4px auto;width:80%;min-height:3px}.chart-note{color:#c8c3e2;font-size:.8rem;line-height:1.5;margin-top:12px}.stats{grid-template-columns:repeat(3,1fr)}dialog{width:min(840px,calc(100% - 64px))}@media(max-width:540px){.results-grid{grid-template-columns:1fr}.stats{grid-template-columns:repeat(2,1fr)}}
+
+:root{--bg:#0c1023;--fg:#edf0ff;--panel:#151932;--btn:#ed5291}body{max-width:1100px;margin:auto;padding:22px 14px}h1{font-size:2rem}button{transition:transform .15s}button:hover{transform:translateY(-2px)}button:disabled{opacity:.4;cursor:default;transform:none}button:focus-visible{outline-color:#7df1cd}.topline{width:100%;max-width:720px;display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}.tag{font-size:.7rem;letter-spacing:.12em;color:#8ae5ce}.mission{width:100%;max-width:692px;border:1px solid #354064;background:#1c2341;border-radius:12px;padding:12px 14px;margin-bottom:12px;font-size:.85rem;color:#d9e1ff}.menu-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin:22px 0}.mode-card{background:#252b4a;border:1px solid #40486d;border-radius:16px;padding:20px 12px}.mode-card h3{margin:0 0 8px}.mode-card p{margin:0 0 16px;line-height:1.5;font-size:.85rem;min-height:62px}.mode-card button{font-size:.85rem}.menu-intro{color:#bfc9e4;line-height:1.6}.menu-meta{display:flex;justify-content:center;flex-wrap:wrap;gap:16px;color:#8ae5ce;font-size:.85rem;margin:14px}.world{border-top:1px solid #40486d;padding-top:16px;margin-top:20px;text-align:left}.level-map{display:grid;grid-template-columns:repeat(10,1fr);gap:6px;margin-top:12px}.level-map button{padding:10px 1px;border-radius:9px;background:#303956;font-size:.8rem}.level-map button small{display:block;color:#ffdc75;font-size:.6rem;margin-top:5px;min-height:10px}.level-map button.current{outline:2px solid #8ae5ce}.settings-row{display:flex;justify-content:center;align-items:center;gap:12px;flex-wrap:wrap;margin-top:18px}select{font:inherit;background:#303956;color:white;border:1px solid #697496;border-radius:9px;padding:8px}.closet{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:12px}.closet button{background:#303956;font-size:.8rem;border:2px solid transparent}.closet button[aria-pressed=true]{border-color:#8ae5ce}.storage-note{font-size:.75rem;color:#aeb9d7;margin-top:18px;line-height:1.5}.result-extra{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:12px 0}.level-bars{overflow-x:auto;justify-content:flex-start;padding-bottom:8px}.level-bar{flex:0 0 44px}.actions{flex-wrap:wrap}.bar{gap:10px;font-size:.9rem}.btns{flex-wrap:wrap}.results-grid .result-chart{background:#222945}.sub{line-height:1.5}#pause-screen{max-width:420px}#results,#home{background:#171d36}.stars-earned{color:#ffdc75;font-size:1.6rem;margin:10px}.preview-note{color:#8ae5ce;font-size:.75rem;max-width:720px;margin-top:12px}
+@media(max-width:600px){.menu-grid{grid-template-columns:1fr}.mode-card p{min-height:0}.level-map{grid-template-columns:repeat(5,1fr)}.topline h1{font-size:1.6rem}.menu-grid{gap:8px;margin:15px 0}.mode-card{padding:14px}.mode-card p{margin-bottom:10px}.mission{box-sizing:border-box;max-width:720px}.tag{font-size:.6rem}}
+@media(prefers-reduced-motion:reduce){button{transition:none}}
+</style>
+</head>
+<body>
+<div class="topline"><div><div class="tag">ARCADE × INSIGHT · PLAYTEST EDITION</div><h1>BrickBurst<span style="color:#8ae5ce">+</span></h1></div><button id="menu-button" class="secondary">Home</button></div><div id="mission" class="mission"></div><div id="daily-goal" class="mission" hidden></div>
+<div class="bar">
+<span>Score <span id="score">0</span></span><span>Best <span id="best">0</span></span>
+<span>Level <span id="lvl">1</span><span id="level-total">/30</span></span><span id="combo"></span><span id="lives"></span>
+<span class="btns"><button id="mute">Sound: on</button><button id="pause">Pause</button><button id="daily-end" class="secondary" hidden>End today’s attempt</button></span>
+</div>
+<canvas tabindex="0" id="c" width="720" height="480" aria-label="BrickBurst game"></canvas>
+<p>Drag to steer, tap to launch. Keyboard: ← → steer · Space launch · P pause. Catch capsules: W wide paddle, M multi-ball, S slow motion, + extra life. ✸ bricks explode. Daily drops: W and S only.</p>
+<div class="preview-note">Local playtest · No ads, payments or analytics uploads · Progress saved on this browser</div>
+<dialog id="home" aria-labelledby="home-title"><div class="tag">SMALL SESSIONS. BIGGER BOUNCES.</div><h2 id="home-title">Find your next best.</h2><div class="menu-intro">Three worlds. Thirty challenges. A little insight after every try.</div><div id="menu-meta" class="menu-meta"></div>
+<div class="menu-grid"><section class="mode-card"><h3>🌈 Adventure</h3><p>Find your angles, unlock worlds and collect stars.</p><button id="adventure">Continue adventure →</button></section><section class="mode-card"><h3>☀️ Daily challenge</h3><p id="daily-description">One court. Three lives. One run per day.</p><button id="daily">Play today →</button><button id="tomorrow-preview" class="secondary" style="margin-top:10px">Preview tomorrow · playtest</button></section></div>
+<div id="worlds"></div><div class="world"><strong>🎨 Your ball collection</strong><div id="closet" class="closet"></div></div><div id="storage-note" class="storage-note">Level unlocks, stars and best scores stay on this browser. Adventure resumes at a level start, not mid-flight. Every journey starts gently and grows with you.</div></dialog>
+<dialog id="pause-screen" aria-labelledby="pause-title"><h2 id="pause-title">Take a breather.</h2><div class="menu-intro">Your ball will wait for you.</div><div class="actions"><button id="resume">Keep bouncing →</button><button id="pause-home" class="secondary">Home</button><button id="daily-end-paused" class="secondary" hidden>End today’s attempt</button></div></dialog>
+<dialog id="end-daily-dialog" aria-labelledby="end-daily-title"><h2 id="end-daily-title">Finish for today?</h2><div class="menu-intro">This ends your daily run. The next challenge opens tomorrow.<br>To take a break and keep your lives, choose Home instead.</div><div class="actions"><button id="end-daily-cancel">Keep my attempt</button><button id="end-daily-confirm" class="secondary">End today’s attempt</button></div></dialog>
+<dialog id="daily-invite" aria-labelledby="daily-invite-title"><div class="tag">A NEW DAY. A NEW COURT.</div><h2 id="daily-invite-title">☀️ Your daily challenge is here!</h2><div id="daily-invite-description" class="menu-intro"></div><div class="actions"><button id="daily-later" class="secondary">Maybe later</button><button id="daily-accept">Take today’s challenge →</button></div><div class="storage-note">A fresh layout every day. This invitation appears once a day on this browser.</div></dialog>
+<dialog id="results" aria-labelledby="result-title">
+<h2 id="result-title"></h2><div id="result-sub" class="sub"></div>
+<div id="result-stats" class="stats"></div>
+<div id="result-scope" class="chart-note"></div>
+<div class="results-grid">
+<section class="result-chart" aria-labelledby="points-title"><h3 id="points-title">Points per level</h3><div id="level-bars" class="level-bars"></div></section>
+<section class="result-chart" aria-labelledby="miss-title"><h3 id="miss-title">Where you missed</h3><div id="miss-strip" class="miss-strip"></div><div class="strip-labels"><span>Left</span><span>Middle</span><span>Right</span></div><div id="miss-note" class="insight"></div></section>
+<section class="result-chart hotspot-wrap" aria-labelledby="hotspot-title"><h3 id="hotspot-title">🔥 Ball hotspots</h3><div class="hotspot-court"><div id="hotspot-grid" class="hotspot-grid" role="img" aria-label="Ball travel heat map"></div><span class="court-top" aria-hidden="true">BRICKS</span><span class="court-bottom" aria-hidden="true">PADDLE</span></div><div class="heat-key"><span>Quick visits</span><span class="heat-ramp"></span><span>Hangout spots</span></div><div id="hotspot-note" class="hotspot-note"></div></section>
+<section class="result-chart" aria-labelledby="contact-title"><h3 id="contact-title">🏓 Your paddle contacts</h3><div id="contacts" class="contact"></div><div id="contact-note" class="chart-note"></div></section>
+<section class="result-chart full" aria-labelledby="history-title"><h3 id="history-title">📈 Attempt score trail</h3><div id="history" class="history"></div><div class="chart-note">Your latest 10 attempts this run. Each ends with a lost life or a cleared level.</div></section>
+</div>
+<div id="progress-badge" class="badge"></div><div id="tip" class="tip"></div>
+<div id="stars-earned" class="stars-earned"></div><div id="reward-note" class="chart-note"></div><div class="result-extra"><button id="revive" class="secondary" hidden>Free test revive · once per run</button><button id="practice" class="secondary">Practise my weak side</button></div><div class="actions"><button id="results-home" class="secondary">Home</button><button id="continue">Continue →</button></div>
+</dialog>
+<script>
+const ENDPOINT=''; // optional: URL that accepts POSTed JSON events (Supabase, Firebase, etc.)
+const cv=document.getElementById('c'),ctx=cv.getContext('2d'),W=720,H=480;
+const COLORS=['#ff4f8b','#ff9f43','#ffd93d','#4ade80','#38bdf8','#a78bfa'];
+const TOUGH={2:'#c084fc',3:'#e5e7eb'};
+const PATTERNS=[
+['1111111111','1111111111','..111111..'],
+['11......11','.11....11.','..11..11..','...1111...'],
+['111....111','..11..11..','....11....','..11..11..','111....111'],
+['1.1.1.1.1.','.1.1.1.1.1','1.1.1.1.1.'],
+['...1111...','..111111..','.11X11X11.','1111111111'],
+['1111111111','1........1','1..1111..1','1........1','1111111111'],
+['11..11..11','.11.11.11.','..111111..','...1111...'],
+['111..111..','..111..111','111..111..','..111..111'],
+['....11....','...1111...','..111111..','.11111111.','1111111111'],
+['1111111111','.11111111.','..11XX11..','...1111...','....11....']];
+const LEVELS=Array.from({length:30},(_,i)=>PATTERNS[i%10].map((row,r)=>[...row].map((c,x)=>{
+  if(c==='.')return c;
+  if(i>=20&&r===0&&x===4)return 'T';
+  if(i>=20&&r===1&&x%3===0)return 'G';
+  if(c==='X')return c;
+  return String(1+(i>=10&&r===0?1:0)+(i>=20&&r===0?1:0));
+}).join('')));
+const WORLDS=['First Bounce','Trick Shots','Cosmic Chaos'];
+const BW=60,BH=22,GAP=6,OFFX=(W-(10*(BW+GAP)-GAP))/2,OFFY=50;
+const SID=Math.random().toString(36).slice(2,10);
+const variant='Classic';
+let mode='adventure',startLevel=1,reviveUsed=false,practiceSide=0,frame=0,seed=1,pausedFrom='ready',dailyRunDate='',dailyPreview=false;
+const dailyInvite=document.getElementById('daily-invite');
+const home=document.getElementById('home'),pauseScreen=document.getElementById('pause-screen');
+let profile={unlocked:1,stars:{},skin:'gold',best:{},daily:{},completed:0};
+let dailyDone={};try{dailyDone=JSON.parse(localStorage.getItem('bb_daily_done')||'{}')||{}}catch(e){}
+const DAILY_THEMES=[
+ {name:'Aurora Drift',bg:'#0c2330',accent:'#60edca',ball:'#e0fff4',colors:['#60edca','#77c7ff','#b1a1ff'],motif:'aurora'},
+ {name:'Sunset Circuit',bg:'#32172a',accent:'#ff9b70',ball:'#fff0b1',colors:['#ff9b70','#ff629f','#ffd37b'],motif:'sun'},
+ {name:'Lunar Garden',bg:'#1d1939',accent:'#c5a4ff',ball:'#f7d6ff',colors:['#c5a4ff','#ff9ed0','#91c7ff'],motif:'moon'},
+ {name:'Ocean Pulse',bg:'#092a40',accent:'#59d8ff',ball:'#b6fff3',colors:['#59d8ff','#38d9b5','#a3f5e8'],motif:'waves'},
+ {name:'Solar Arcade',bg:'#302611',accent:'#ffd76c',ball:'#fffbd5',colors:['#ffd76c','#ff9e58','#ffe99c'],motif:'sun'},
+ {name:'Rose Nebula',bg:'#30152e',accent:'#ff82bd',ball:'#ffe6f2',colors:['#ff82bd','#bf96ff','#ffb19b'],motif:'orbit'},
+ {name:'Electric Midnight',bg:'#111b3b',accent:'#90a4ff',ball:'#d8ff9d',colors:['#90a4ff','#7fe0ff','#d8ff9d'],motif:'grid'}];
+function dayNumber(day){return Math.floor(Date.parse(day+'T12:00:00Z')/86400000)}
+function dailyTheme(day){return DAILY_THEMES[((dayNumber(day)%7)+7)%7]}
+const DAILY_MISSIONS=[
+ {id:'hunt',name:'🎯 Star Seeker',goal:'Break all 6 star-marked bricks. Other bricks are optional.',twist:'Small paddle. Pick your angles.',speed:5.1,width:92,drift:0},
+ {id:'sprint',name:'⏱️ Ninety-second Dash',goal:'Clear the court in 90 seconds of active play.',twist:'Fast ball, soft bricks. The clock carries across lives.',speed:5.7,width:120,drift:0,limit:90},
+ {id:'rally',name:'🛡️ Rally Survivor',goal:'Survive 60 seconds and make 12 paddle returns.',twist:'Armoured bricks keep the ball bouncing. Cleared bricks regrow.',speed:5.35,width:108,drift:12,duration:60,returns:12},
+ {id:'vault',name:'🔑 Crack the Vault',goal:'Break both KEY bricks, then destroy the shielded core.',twist:'The moving core stays locked until both keys are gone.',speed:5.05,width:112,drift:0},
+ {id:'blast',name:'💥 Chain Reaction',goal:'Clear the explosive court in 100 seconds.',twist:'Set off neighbouring ✸ bricks to make chain reactions.',speed:5.25,width:116,drift:0,limit:100},
+ {id:'boss',name:'👑 Core Pursuit',goal:'Hit the moving core 9 times before 100 seconds runs out.',twist:'Ignore the decoys. Lead the moving target.',speed:5.6,width:102,drift:0,limit:100},
+ {id:'twin',name:'☄️ Double Trouble',goal:'Clear the court while juggling two starting balls.',twist:'Each launch starts two balls. Lose a life only when both drop.',speed:5.15,width:124,drift:15},
+ {id:'wind',name:'🌬️ Wind Tunnel',goal:'Clear the staggered court.',twist:'A changing side wind bends each shot. Read the wind arrow.',speed:5.15,width:116,drift:0}
+];
+function dailySpec(day=dailyRunDate||dayKey()){const index=((dayNumber(day)%DAILY_MISSIONS.length)+DAILY_MISSIONS.length)%DAILY_MISSIONS.length;return DAILY_MISSIONS[index]}
+function dailyProgress(){
+ const spec=dailySpec(),alive=bricks.filter(b=>b.alive);
+ if(spec.id==='hunt')return (6-alive.filter(b=>b.target).length)+'/6 stars';
+ if(spec.id==='vault')return alive.some(b=>b.key)?(2-alive.filter(b=>b.key).length)+'/2 keys':'Vault open · '+(alive.find(b=>b.core)?.hp||0)+' core hits left';
+ if(spec.id==='boss')return (alive.find(b=>b.core)?.hp||0)+' core hits left';
+ if(spec.id==='rally')return Math.min(60,Math.floor(run.seconds))+'/60s · '+Math.min(12,run.returns)+'/12 returns';
+ return alive.length+' bricks left';
+}
+function dailyWon(){const spec=dailySpec();if(spec.id==='hunt')return !bricks.some(b=>b.alive&&b.target);if(spec.id==='vault'||spec.id==='boss')return !bricks.some(b=>b.alive&&b.core);if(spec.id==='rally')return run.seconds>=spec.duration&&run.returns>=spec.returns;return bricks.every(b=>!b.alive)}
+function updateDailyGoal(){const box=document.getElementById('daily-goal');box.hidden=mode!=='daily';if(mode!=='daily')return;const spec=dailySpec();box.textContent=spec.name+' · '+dailyProgress()+(spec.limit?' · '+Math.max(0,Math.ceil(spec.limit-run.seconds))+'s left':'')+(spec.id==='wind'?' · Wind '+(Math.sin(frame*.012)>0?'→':'←'):'');}
+function tomorrowKey(){const d=new Date();d.setDate(d.getDate()+1);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
+function applyDailyTheme(){const theme=mode==='daily'?dailyTheme(dailyRunDate):null;document.documentElement.style.setProperty('--panel',theme?theme.bg:'#151932');document.documentElement.style.setProperty('--btn',theme?theme.accent:'#ed5291');document.documentElement.style.setProperty('--btn-fg',theme?'#142035':'#fff');}
+function dailyCheckpoint(){try{const c=JSON.parse(localStorage.getItem('bb_daily_run')||'null');return c&&c.missionVersion===2&&c.date===dayKey()&&!dailyDone[c.date]?c:null}catch(e){return null}}
+function saveDailyRun(){
+ if(mode!=='daily'||dailyPreview||dailyDone[dailyRunDate]||!bricks||state==='menu'||state==='won'||state==='lost')return;
+ const data={missionVersion:2,date:dailyRunDate,bricks,balls,items,parts,paddle,score,lives,level,combo,wide,slow,shake,frame,seed,attempt:pendingResult==='life'?freshStats():attempt,run,attemptHistory};
+ try{localStorage.setItem('bb_daily_run',JSON.stringify(data))}catch(e){storageAvailable=false}
+}
+function restoreDailyRun(c){({bricks,balls,items,parts,paddle,score,lives,level,combo,wide,slow,shake,frame,seed,attempt,run,attemptHistory}=c);pendingResult=null;state='ready';balls.forEach(b=>{if(b.uy||b.ux)state='play'});lastTick=performance.now();hud();updateMission();}
+let storageAvailable=true;
+try{const saved=JSON.parse(localStorage.getItem('bb_plus_v1')||'null');if(saved&&typeof saved==='object'){profile.unlocked=Math.max(1,Math.min(30,Number(saved.unlocked)||1));profile.stars=saved.stars&&typeof saved.stars==='object'?saved.stars:{};profile.best=saved.best&&typeof saved.best==='object'?saved.best:{};profile.daily=saved.daily&&typeof saved.daily==='object'?saved.daily:{};profile.completed=Number(saved.completed)||0;profile.skin=['gold','mint','rose','cosmic'].includes(saved.skin)?saved.skin:'gold'}}catch(e){storageAvailable=false}
+const SKINS=[{id:'gold',name:'Solar Gold',color:'#ffd93d',need:0},{id:'mint',name:'Mint Comet',color:'#70e6cb',need:5},{id:'rose',name:'Rose Rocket',color:'#ff79b0',need:15},{id:'cosmic',name:'Cosmic Violet',color:'#bb9aff',need:30}];
+try{const saved=JSON.parse(localStorage.getItem('bb_plus_v1')||'null');profile.adventureLevel=Math.max(1,Math.min(profile.unlocked,Number(saved?.adventureLevel)||profile.unlocked))}catch(e){profile.adventureLevel=profile.unlocked}
+function totalStars(){return Object.values(profile.stars).reduce((a,b)=>a+(Number(b)||0),0)}
+function saveProfile(){try{localStorage.setItem('bb_plus_v1',JSON.stringify(profile))}catch(e){storageAvailable=false}}
+function dayKey(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
+function hashDay(day){return [...day].reduce((a,c)=>(Math.imul(a,31)+c.charCodeAt(0))>>>0,7)}
+function gameRandom(){seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296}
+function worldIndex(){return Math.floor(((level-1)%30)/10)}
+// Deterministic progression: no hidden changes based on individual player performance.
+function challengePlan(playMode=mode,stage=level){
+ if(playMode==='daily'){const s=dailySpec();return {ballSpeed:s.speed,paddleWidth:s.width,drift:s.drift,motion:.018,bossMotion:.03,flow:false,extraHP:0}}
+ if(playMode==='practice')return {ballSpeed:4,paddleWidth:142,drift:0,motion:0,bossMotion:0,flow:false,extraHP:0};
+ const progress=Math.max(0,(stage-1)/29),flow=stage>5&&stage%6===0&&stage%5!==0;
+ const base=Math.min(9.2,3.9+progress*3.7);
+ return {ballSpeed:base*(flow?.9:1),paddleWidth:Math.max(84,142-Math.min(progress,1.2)*50)+(flow?10:0),drift:stage<11?0:Math.min(22,10+progress*9),motion:Math.min(.034,.013+progress*.012),bossMotion:Math.min(.038,.018+progress*.014),flow,extraHP:0};
+}
+function skinColor(){return mode==='daily'?dailyTheme(dailyRunDate).ball:SKINS.find(s=>s.id===profile.skin).color}
+function dailyLayout(day){
+ let value=hashDay(day);const random=()=>{value=(Math.imul(value,1664525)+1013904223)>>>0;return value/4294967296};
+ const marker=((dayNumber(day)%10)+10)%10,s=dailySpec(day),mirror=hashDay(day)%2;
+ return Array.from({length:5},(_,r)=>Array.from({length:10},(_,raw)=>{const c=mirror?9-raw:raw;
+   if(r===0)return raw===marker?'X':s.id==='rally'?'3':'1';
+   if(s.id==='hunt')return (r+c)%3===0?'.':(c%4===0?'2':'1');
+   if(s.id==='sprint')return r===4||random()<.25?'.':'1';
+   if(s.id==='rally')return r>2?'.':c%2===r%2?'3':'.';
+   if(s.id==='vault')return r===1&&(c===1||c===8)?'T':r===3?'G':(r+c)%3===0?'.':'1';
+   if(s.id==='blast')return (r+c)%3===0?'X':'1';
+   if(s.id==='boss')return c<r||c>9-r?'.':r%2?'2':'1';
+   if(s.id==='twin')return Math.abs(c-4.5)<4-r/2?'1':'.';
+   return (r+c)%2===0?(r%2?'2':'1'):'.';
+ }).join(''));
+}
+function maybeDailyInvite(){
+ if(!home.open||results.open||pauseScreen.open||dailyInvite.open||document.hidden)return;
+ const today=dayKey();let seen='';try{seen=localStorage.getItem('bb_daily_invite')||''}catch(e){};
+ if(dailyDone[today]||seen===today||maybeDailyInvite.seen===today)return;
+ maybeDailyInvite.seen=today;try{localStorage.setItem('bb_daily_invite',today)}catch(e){storageAvailable=false}
+ home.close();const spec=dailySpec(today);document.getElementById('daily-invite-description').textContent=today+' · '+spec.name+'. '+spec.goal+' '+spec.twist+' Three lives. One run today.';dailyInvite.showModal();
+}
+function bestKey(){return mode==='daily'?'daily:'+dailyRunDate:mode+':progressive-v1'}
+function renderHome(){
+ document.getElementById('menu-meta').textContent='★ '+totalStars()+' stars · '+Math.min(profile.unlocked,30)+'/30 levels unlocked';
+ const today=dayKey(),done=dailyDone[today],checkpoint=dailyCheckpoint();
+ document.getElementById('daily-description').textContent=done?'✓ Today’s run finished · '+done.score+' points. A new mission arrives tomorrow.':dailySpec(today).name+' · '+dailySpec(today).goal;
+ document.getElementById('daily').disabled=!!done;document.getElementById('daily').textContent=done?'Back tomorrow ☀️':checkpoint?'Resume today’s run →':'Play today →';
+ document.getElementById('tomorrow-preview').textContent='Preview tomorrow: '+dailySpec(tomorrowKey()).name+' · playtest';
+ document.getElementById('adventure').textContent='Play level '+(profile.adventureLevel||profile.unlocked)+' →';
+ document.getElementById('worlds').innerHTML=WORLDS.map((name,w)=>'<section class="world"><strong>'+['🌈','🔥','🌌'][w]+' '+name+'</strong><div class="level-map">'+Array.from({length:10},(_,n)=>{const lv=w*10+n+1;return '<button data-level="'+lv+'" '+(lv>profile.unlocked?'disabled':'')+' class="'+(lv===profile.unlocked?'current':'')+'">'+(lv>profile.unlocked?'🔒':lv)+'<small>'+('★'.repeat(profile.stars[lv]||0)||'·')+'</small></button>'}).join('')+'</div></section>').join('');
+ document.getElementById('closet').innerHTML=SKINS.map(s=>'<button data-skin="'+s.id+'" aria-pressed="'+(profile.skin===s.id)+'" '+(totalStars()<s.need?'disabled':'')+'><span style="color:'+s.color+'">●</span> '+s.name+(totalStars()<s.need?' · '+s.need+'★':'')+'</button>').join('');
+ if(!storageAvailable)document.getElementById('storage-note').textContent='Browser storage is unavailable. You can play, but progress may not survive closing this page.';
+}
+function openHome(){saveDailyRun();if(results.open)results.close();if(pauseScreen.open)pauseScreen.close();state='menu';held.clear();renderHome();if(!home.open)home.showModal();maybeDailyInvite()}
+function startGame(nextMode,lv=1,preview=false){
+ if(!['adventure','daily','practice'].includes(nextMode))return;
+ saveDailyRun();if(nextMode==='daily'&&!preview&&dailyDone[dayKey()]){openHome();return}
+ dailyPreview=nextMode==='daily'&&preview;
+ mode=nextMode;startLevel=lv;reviveUsed=false;
+ dailyRunDate=mode==='daily'?(dailyPreview?tomorrowKey():dayKey()):'';seed=mode==='daily'?hashDay(dailyRunDate):(Date.now()>>>0);if(mode==='daily')startLevel=11;
+ if(dailyInvite.open)dailyInvite.close();
+ if(home.open)home.close();if(results.open)results.close();if(pauseScreen.open)pauseScreen.close();reset();applyDailyTheme();const checkpoint=mode==='daily'&&!dailyPreview?dailyCheckpoint():null;if(checkpoint)restoreDailyRun(checkpoint);else saveDailyRun();cv.focus();
+}
+function togglePause(){if(results.open||home.open)return;if(pauseScreen.open){pauseScreen.close();state=pausedFrom;lastTick=performance.now();cv.focus()}else if(state==='play'||state==='ready'){pausedFrom=state;state='paused';pauseScreen.showModal()}}
+function updateMission(){document.getElementById('mission').textContent=mode==='practice'?'🎯 Practice: cover the '+['left','middle','right'][practiceSide]+' · clear the court':mode==='daily'?(dailyPreview?'🧪 TOMORROW PREVIEW · ':'☀️ DAILY · ')+dailySpec().name+' · '+dailyTheme(dailyRunDate).name+' · '+dailyRunDate+' · '+dailySpec().goal+' '+dailySpec().twist+(dailyPreview?' · PREVIEW: no scores saved.':' · Three lives. One run.'):['🌈','🔥','🌌'][worldIndex()]+' '+WORLDS[worldIndex()]+' · '+(level%5===0?'Boss gate: crack the moving core':worldIndex()===2?'Break the green key to open shielded bricks':worldIndex()===1?'Moving bricks: lead your shots':'Find your angles · clear the court')}
+const events=[];
+function log(type,data){
+  const ev={t:Date.now(),session:SID,variant,type,level,score,...data};
+  events.push(ev);
+  if(ENDPOINT)fetch(ENDPOINT,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(ev),keepalive:true}).catch(()=>{});
+}
+let bricks,balls,items,parts,paddle,score,lives,level,state,combo,wide,slow,shake,best=0,levelStart,muted=false;
+const results=document.getElementById('results');
+let attempt,run,attemptHistory=[],pendingResult=null,lastReport=null,lastTick=0,newBest=false;
+function freshStats(){return {seconds:0,points:0,bricks:0,returns:0,powerups:0,bestCombo:0,longest:0,rally:0,heat:Array(96).fill(0),contacts:Array(5).fill(0),misses:Array(3).fill(0)}}
+function tally(key,n=1){attempt[key]+=n;run[key]+=n}
+function startAttempt(){attempt=freshStats();lastTick=performance.now()}
+function finishAttempt(){
+  const entry={...attempt,level,number:attemptHistory.length+1};
+  attemptHistory.push(entry);return entry;
+}
+function showResults(kind,entry){
+  pendingResult=kind;
+  const all=kind==='lost'||kind==='won',s=all?run:entry;
+  const levelPoints=Array.from({length:30},()=>0).map((_,i)=>attemptHistory.filter(a=>a.level===i+1).reduce((n,a)=>n+a.points,0));
+  lastReport={outcome:kind,level,score,lives,scope:all?'whole game':'attempt',mission:mode==='daily'?dailySpec().name:null,stats:JSON.parse(JSON.stringify(s)),pointsPerLevel:levelPoints,attempts:JSON.parse(JSON.stringify(attemptHistory))};
+  const title=s.powerups>=3?'⚡ Power Hunter':s.bestCombo>=5?'🔥 Combo Star':s.longest>=5?'🛡️ Bounce Boss':s.bricks>=15?'🧱 Brick Blaster':'🌟 Rising Star';
+  document.getElementById('result-title').textContent=kind==='won'?(mode==='daily'?'☀️ Daily complete!':mode==='practice'?'🎯 Practice complete!':'🏆 Adventure complete!'):title;
+  document.getElementById('result-sub').textContent=all?    (kind==='won'?'Challenge complete!':'Game over.')+' Final score '+score+'.'+(newBest?' New best!':''):    (kind==='level'?'Level '+level+' cleared!':'Nice try! '+lives+' '+(lives===1?'life':'lives')+' left.')+' This attempt: '+s.points+' points.';
+  const seconds=Math.round(s.seconds),time=Math.floor(seconds/60)+'m '+String(seconds%60).padStart(2,'0')+'s';
+  document.getElementById('result-scope').textContent=all?'Whole-run stats & maps · Level scores cover this run.':'This attempt’s stats & maps · Level scores and attempt trail cover this run.';
+  const stats=[['🧱',s.bricks,'Bricks smashed'],['🔥',s.bestCombo,'Best combo'],['⚡',s.powerups,'Power-ups caught'],['⏱️',time,'Time played'],['🎯',s.points,'Points earned'],['🏓',s.returns,'Paddle returns']];
+  document.getElementById('result-stats').innerHTML=stats.map(([icon,value,label])=>'<div class="stat"><strong>'+icon+' '+value+'</strong><span>'+label+'</span></div>').join('');
+  const top=Math.max(...levelPoints,1);
+  document.getElementById('level-bars').innerHTML=levelPoints.map((n,i)=>'<div class="level-bar" aria-label="Level '+(i+1)+': '+(i+1>level?'not reached':n+' points')+'"><span>'+ (i+1>level?'—':n)+'</span><i style="height:'+Math.max(4,n/top*100)+'px;background:'+COLORS[i%COLORS.length]+';opacity:'+(i+1>level?.2:1)+'"></i><small>Level '+(i+1)+'</small></div>').join('');
+  const misses=s.misses.reduce((a,b)=>a+b,0),peak=Math.max(...s.misses,1),names=['left','middle','right'];
+  document.getElementById('miss-strip').innerHTML=s.misses.map((n,i)=>'<div class="miss-cell" style="background:rgba(255,79,139,'+(misses?.15+.85*n/peak:.15)+')" aria-label="'+names[i]+': '+n+' misses">'+n+'</div>').join('');
+  const hot=s.misses.map((n,i)=>n===peak?i:-1).filter(i=>i>=0);
+  document.getElementById('miss-note').textContent=!misses?'No misses. Keep that rhythm!':hot.length===1?'Most misses: '+names[hot[0]]+'.':hot.length===3?'Misses spread evenly across the court.':'Most misses: '+hot.map(i=>names[i]).join(' & ')+'.';
+  const previous=attemptHistory.slice(0,-1).reverse().find(a=>a.level===level);
+  document.getElementById('progress-badge').textContent=all?newBest?'✨ Personal best!':'🎯 Best rally: '+s.longest+' returns':previous?entry.points>previous.points?'↗ '+(entry.points-previous.points)+' more points than your last try this level':entry.points===previous.points?'🤝 Matched your last try this level':'🎯 Best rally: '+s.longest+' returns':'🎯 Best rally: '+s.longest+' returns';
+  document.getElementById('tip').textContent=misses&&hot.length===1?['💡 Next try: move left a little earlier.','💡 Next try: get under the ball before it drops.','💡 Next try: move right a little earlier.'][hot[0]]:'💡 Next try: use paddle edges to reach the corners.';
+  document.getElementById('continue').textContent=all?(mode==='daily'?'Back to Home →':'Play again ↻'):kind==='level'?'Next level →':'Let’s go →';
+  document.getElementById('revive').hidden=kind!=='lost'||reviveUsed||mode==='daily'||mode==='practice';
+  document.getElementById('practice').hidden=mode==='practice';
+  const earned=profile.stars[level]||0;
+  document.getElementById('stars-earned').textContent=mode==='adventure'&&(kind==='level'||kind==='won')?'★'.repeat(earned)+'☆'.repeat(3-earned):'';
+  document.getElementById('reward-note').textContent=mode==='adventure'?'Earn stars to unlock ball colours. 3★ no misses · 2★ one miss · 1★ clear the level.':mode==='daily'?dailyPreview?'Tomorrow preview only · No scores or rewards saved.':all?'Today’s run is finished. Come back tomorrow for new colours and a new challenge.':'Same run · '+lives+' lives left.':mode==='practice'?'Practice does not change Adventure stars.':'One free test revive per run. No ads in this preview.';
+  if(!dailyPreview){profile.best[bestKey()]=Math.max(Number(profile.best[bestKey()])||0,score);saveProfile()}
+  renderHotspots(s.heat);
+  renderDetailedResults(s);
+  lastTick=0;results.showModal();saveDailyRun();document.getElementById('continue').focus();
+}
+function renderDetailedResults(s){
+  const labels=['Left edge','Left','Middle','Right','Right edge'],peak=Math.max(...s.contacts,1);
+  document.getElementById('contacts').innerHTML=s.contacts.map((n,i)=>'<div aria-label="'+labels[i]+': '+n+' contacts"><span>'+n+'</span><i style="height:'+Math.max(3,n/peak*65)+'px"></i>'+labels[i]+'</div>').join('');
+  document.getElementById('contact-note').textContent='Best rally: '+s.longest+' returns. Edge hits send the ball wider.';
+  const recent=attemptHistory.slice(-10),top=Math.max(...recent.map(a=>a.points),1);
+  document.getElementById('history').innerHTML=recent.map(a=>'<div class="attempt" aria-label="Attempt '+a.number+', level '+a.level+': '+a.points+' points">'+a.points+'<i style="height:'+Math.max(3,a.points/top*65)+'px"></i>#'+a.number+'<br>Lv '+a.level+'</div>').join('');
+}
+function renderHotspots(heat){
+  const grid=document.getElementById('hotspot-grid'),note=document.getElementById('hotspot-note');
+  const peak=Math.max(...heat),total=heat.reduce((a,b)=>a+b,0),hottest=peak>0?heat.indexOf(peak):-1;
+  const colors=['#272344','#504078','#7753b0','#bf549f','#f564a1','#ffad80','#ffdc75'];
+  grid.innerHTML=heat.map((n,i)=>'<span aria-hidden="true" class="hotspot-cell'+(i===hottest?' hottest':'')+'" style="background:'+colors[n&&peak?Math.max(1,Math.ceil(n/peak*6)):0]+'"></span>').join('');
+  if(!total){note.textContent='Your next launch will light up the court.';grid.setAttribute('aria-label','Ball travel heat map. No activity recorded yet.');return}
+  const sides=[0,0,0];heat.forEach((n,i)=>sides[Math.floor((i%12)/4)]+=n);
+  const busiest=sides.indexOf(Math.max(...sides)),share=Math.round(sides[busiest]/total*100);
+  const region=['upper','middle','lower'][Math.min(2,Math.floor(Math.floor(hottest/12)/8*3))]+' '+['left','middle','right'][Math.floor((hottest%12)/4)];
+  const tiedCells=heat.filter(n=>n===peak).length>1,tiedSides=sides.filter(n=>n===sides[busiest]).length>1;
+  note.textContent='★ '+(tiedCells?'One busy spot: ':'Busiest spot: ')+region+'. '+(tiedSides?'Ball time is shared most across '+sides.map((n,i)=>n===sides[busiest]?['left','middle','right'][i]:null).filter(Boolean).join(' & ')+'.':share+'% of ball time on the '+['left','middle','right'][busiest]+'.');
+  grid.setAttribute('aria-label','Ball travel heat map. Brighter cells mean more time spent there. '+note.textContent);
+}
+document.getElementById('continue').onclick=()=>{
+  const kind=pendingResult;pendingResult=null;results.close();
+  if(kind==='lost'||kind==='won'){if(mode==='daily'){state='summary';openHome()}else startGame(mode,startLevel)}
+  else if(kind==='level'){level++;load()}
+  else{startAttempt();state='ready'}
+};
+results.addEventListener('cancel',e=>e.preventDefault());
+try{best=+localStorage.getItem('bb_best')||0}catch(e){}
+let ac;
+function tone(f,d,type,v){
+  if(muted)return;
+  try{ac=ac||new (window.AudioContext||window.webkitAudioContext)();
+  const o=ac.createOscillator(),g=ac.createGain();o.type=type||'square';o.frequency.value=f;
+  g.gain.value=v||.05;g.gain.exponentialRampToValueAtTime(.0001,ac.currentTime+d);
+  o.connect(g);g.connect(ac.destination);o.start();o.stop(ac.currentTime+d)}catch(e){}
+}
+function speed(){return challengePlan().ballSpeed*(slow>0?.65:1)}
+function newBall(){return{x:W/2,y:H-48,ux:0,uy:0,trail:[]}}
+function load(){
+  bricks=[];
+  (mode==='practice'?['....111...','....111...','....111...']:mode==='daily'?dailyLayout(dailyRunDate):LEVELS[(level-1)%30]).forEach((row,r)=>[...row].forEach((ch,c)=>{
+    if(ch==='.')return;
+    const ex=ch==='X';
+    bricks.push({c,r,x:OFFX+c*(BW+GAP),y:OFFY+r*(BH+GAP),hp:ex||ch==='T'||ch==='G'?1:+ch,key:ch==='T',shield:ch==='G',baseX:OFFX+c*(BW+GAP),ex,alive:true});
+  }));
+  const plan=challengePlan();
+  if(mode==='daily'){
+    const spec=dailySpec();
+    if(spec.id==='hunt')bricks.filter(b=>!b.ex).filter((b,i)=>i%5===0).slice(0,6).forEach(b=>{b.target=true;b.hp=2});
+    if(spec.id==='vault'||spec.id==='boss')bricks.push({c:4,r:6,x:W/2-30,baseX:W/2-30,y:225,hp:spec.id==='boss'?9:4,ex:false,boss:true,core:true,shield:spec.id==='vault',alive:true});
+  }
+  if(mode==='adventure'){
+    // Breathing-room courts give satisfying chains between demanding stages.
+    if(plan.flow)bricks=bricks.filter(b=>b.r!==1||b.c%2===0||b.key||b.shield);
+    bricks.forEach(b=>{if(!b.key&&!b.ex&&!b.shield){b.hp+=plan.extraHP;if(level>=16&&!plan.flow&&b.r===2&&b.c%3===0)b.hp=Math.max(b.hp,2)}});
+  }
+  if(worldIndex()===2&&mode!=='practice'&&bricks.some(b=>b.shield)&&!bricks.some(b=>b.key)){const key=bricks.find(b=>!b.shield&&!b.ex);if(key){key.key=true;key.hp=1}}
+  if(mode==='practice')bricks.forEach(b=>{b.x=b.baseX=practiceSide===0?b.x-260:practiceSide===2?b.x+190:b.x});
+  if(mode!=='practice'&&level%5===0)bricks.push({c:4,r:6,x:W/2-30,baseX:W/2-30,y:220,hp:5,ex:false,boss:true,alive:true});
+  paddle.w=plan.paddleWidth;paddle.x=Math.max(0,Math.min(W-paddle.w,paddle.x));
+  balls=[newBall()];items=[];wide=0;slow=0;combo=0;frame=0;state='ready';levelStart=Date.now();
+  if(mode==='adventure'){profile.adventureLevel=level;saveProfile()}
+  startAttempt();log('level_start',{});updateMission();hud();
+}
+function reset(){if(results.open)results.close();pendingResult=null;newBest=false;run=freshStats();attemptHistory=[];level=startLevel;score=0;lives=3;parts=[];shake=0;paddle={w:110,h:14,x:W/2-55,y:H-30};best=Number(profile.best[bestKey()])||0;load()}
+function hud(){
+  const $=id=>document.getElementById(id);
+  $('score').textContent=score;$('best').textContent=best;$('lvl').textContent=level;
+  $('level-total').textContent=mode==='daily'?' · Daily':mode==='practice'?' · Practice':'/30';
+  $('lives').textContent='Lives '+'♥'.repeat(Math.max(lives,0));
+  $('combo').textContent=combo>=5?'Combo x'+mult():'';updateDailyGoal();
+  $('daily-end').hidden=mode!=='daily'||dailyPreview||!!dailyDone[dailyRunDate];$('daily-end-paused').hidden=$('daily-end').hidden;
+}
+function mult(){return Math.min(5,1+Math.floor(combo/5))}
+function burst(x,y,color,n){for(let i=0;i<(n||10);i++)parts.push({x,y,dx:(Math.random()-.5)*7,dy:(Math.random()-.5)*7,life:26,color})}
+function hit(b,dmg){
+  if(!b.alive)return;
+  if(b.shield&&bricks.some(k=>k.alive&&k.key)){tone(180,.04);return}
+  b.hp-=dmg;
+  if(b.hp>0){tone(300,.06);return}
+  b.alive=false;combo++;attempt.bestCombo=Math.max(attempt.bestCombo,combo);run.bestCombo=Math.max(run.bestCombo,combo);score+=10*mult();tally('points',10*mult());tally('bricks');shake=Math.max(shake,b.ex?10:2);
+  burst(b.x+BW/2,b.y+BH/2,b.ex?'#ff5a36':COLORS[b.r%6],b.ex?24:10);
+  tone(b.ex?120:500+b.r*60,b.ex?.25:.08,b.ex?'sawtooth':'square');
+  if(gameRandom()<.18){const types=mode==='daily'?'WS':'WMS+';items.push({x:b.x+BW/2,y:b.y,k:types[Math.floor(gameRandom()*types.length)]})}
+  if(b.ex)bricks.forEach(o=>{if(o.alive&&Math.abs(o.c-b.c)<=1&&Math.abs(o.r-b.r)<=1)hit(o,99)});
+}
+function collect(k){
+  tally('powerups');
+  tone(880,.15,'triangle',.07);log('powerup',{kind:k});
+  if(k==='W')wide=600;
+  if(k==='S')slow=480;
+  if(k==='+')lives=Math.min(5,lives+1);
+  if(k==='M'){const src=balls[0];for(let i=0;i<2;i++)balls.push({x:src.x,y:src.y,ux:Math.sin((i?.5:-.5)),uy:-Math.cos(.5),trail:[]})}
+}
+function launch(){
+  lastTick=performance.now();
+  const a=(gameRandom()-.5)*.8;
+  balls[0].ux=Math.sin(a);balls[0].uy=-Math.cos(a);state='play';tone(660,.1);
+  if(mode==='daily'&&dailySpec().id==='twin'&&balls.length===1)balls.push({x:balls[0].x+14,y:balls[0].y,ux:-Math.sin(a+.35),uy:-Math.cos(a+.35),trail:[]});
+}
+function endGame(won){
+  state=won?'won':'lost';newBest=score>best;
+  if(!dailyPreview&&score>best){best=score;try{localStorage.setItem('bb_best',best)}catch(e){}}
+  if(!dailyPreview){profile.best[bestKey()]=Math.max(Number(profile.best[bestKey()])||0,score);if(mode==='daily'){profile.daily[dailyRunDate]=score;dailyDone[dailyRunDate]={score,won,mission:dailySpec().name};try{localStorage.setItem('bb_daily_done',JSON.stringify(dailyDone));localStorage.removeItem('bb_daily_run')}catch(e){storageAvailable=false}}saveProfile()}
+  log(won?'game_won':'game_over',{});hud();showResults(won?'won':'lost',attemptHistory[attemptHistory.length-1]);
+}
+function update(){
+  const now=performance.now(),dt=lastTick?Math.min((now-lastTick)/1000,.1):0;lastTick=now;
+  if(results.open||home.open||pauseScreen.open||document.hidden)return;
+  parts.forEach(p=>{p.x+=p.dx;p.y+=p.dy;p.life--});parts=parts.filter(p=>p.life>0);
+  shake*=.85;
+  paddle.w+=((wide>0?180:challengePlan().paddleWidth)-paddle.w)*.15;paddle.x=Math.max(0,Math.min(W-paddle.w,paddle.x));
+  if(wide>0)wide--;if(slow>0)slow--;
+  if(state==='ready'){balls[0].x=paddle.x+paddle.w/2;balls[0].y=paddle.y-9;return}
+  if(state!=='play')return;
+  tally('seconds',dt);frame++;if(frame%60===0)saveDailyRun();
+  const plan=challengePlan();
+  bricks.forEach(k=>{if(k.boss)k.x=k.baseX+Math.sin(frame*plan.bossMotion)*150;else if(plan.drift)k.x=k.baseX+Math.sin(frame*plan.motion+k.r*.5)*plan.drift});
+  items.forEach(i=>i.y+=2.5);
+  items=items.filter(i=>{
+    if(i.y>paddle.y-6&&i.y<paddle.y+paddle.h+10&&i.x>paddle.x&&i.x<paddle.x+paddle.w){collect(i.k);return false}
+    return i.y<H+10;
+  });
+  const v=speed();
+  for(const b of balls){
+    const cell=Math.min(7,Math.max(0,Math.floor(b.y/H*8)))*12+Math.min(11,Math.max(0,Math.floor(b.x/W*12)));
+    attempt.heat[cell]+=dt;run.heat[cell]+=dt;
+    b.trail.push([b.x,b.y]);if(b.trail.length>7)b.trail.shift();
+    if(mode==='daily'&&dailySpec().id==='wind'){b.ux+=Math.sin(frame*.012)*.004;const norm=Math.hypot(b.ux,b.uy);b.ux/=norm;b.uy/=norm;if(Math.abs(b.uy)<.18){b.uy=Math.sign(b.uy||-1)*.18;b.ux=Math.sign(b.ux)*Math.sqrt(1-b.uy*b.uy)}}
+    b.x+=b.ux*v;b.y+=b.uy*v;
+    if(b.x<9){b.x=9;b.ux=Math.abs(b.ux)}
+    if(b.x>W-9){b.x=W-9;b.ux=-Math.abs(b.ux)}
+    if(b.y<9){b.y=9;b.uy=Math.abs(b.uy)}
+    if(b.uy>0&&b.y+9>=paddle.y&&b.y+9<=paddle.y+paddle.h+8&&b.x>paddle.x-9&&b.x<paddle.x+paddle.w+9){
+      const a=(b.x-(paddle.x+paddle.w/2))/(paddle.w/2)*Math.PI/3;
+      tally('returns');attempt.rally++;run.rally++;attempt.longest=Math.max(attempt.longest,attempt.rally);run.longest=Math.max(run.longest,run.rally);
+      const zone=Math.max(0,Math.min(4,Math.floor((b.x-paddle.x)/paddle.w*5)));attempt.contacts[zone]++;run.contacts[zone]++;
+      b.ux=Math.sin(a);b.uy=-Math.cos(a);b.y=paddle.y-9;combo=0;tone(220,.06,'triangle');
+    }
+    for(const k of bricks){
+      if(!k.alive)continue;
+      if(b.x+9>k.x&&b.x-9<k.x+BW&&b.y+9>k.y&&b.y-9<k.y+BH){
+        const ox=Math.min(b.x+9-k.x,k.x+BW-(b.x-9)),oy=Math.min(b.y+9-k.y,k.y+BH-(b.y-9));
+        if(ox<oy)b.ux*=-1;else b.uy*=-1;
+        hit(k,1);break;
+      }
+    }
+  }
+  const lost=balls.filter(b=>b.y>H+9);
+  lost.forEach(b=>{const zone=Math.max(0,Math.min(2,Math.floor(b.x/W*3)));attempt.misses[zone]++;run.misses[zone]++;attempt.rally=0;run.rally=0;log('ball_lost',{x:Math.round(b.x)})});
+  balls=balls.filter(b=>b.y<=H+9);
+  if(mode==='daily'){
+    const spec=dailySpec();updateDailyGoal();
+    if(dailyWon()&&(balls.length||lives>1)){finishAttempt();return endGame(true)}
+    if(spec.limit&&run.seconds>=spec.limit){finishAttempt();endGame(false);document.getElementById('result-sub').textContent='Time’s up! '+dailyProgress()+'. Score '+score+'. A new mission arrives tomorrow.';return}
+    if(spec.id==='rally'&&bricks.every(k=>!k.alive))bricks.forEach(k=>{k.alive=true;k.hp=3});
+  }
+  if(mode!=='daily'&&bricks.every(k=>!k.alive)){
+    const entry=finishAttempt();log('level_clear',{seconds:Math.round(attempt.seconds)});tone(1000,.3,'triangle',.08);state='summary';hud();
+    if(mode==='adventure'){
+      const misses=attemptHistory.filter(a=>a.level===level).reduce((n,a)=>n+a.misses.reduce((x,y)=>x+y,0),0);
+      const stars=misses===0?3:misses<=1?2:1;profile.stars[level]=Math.max(profile.stars[level]||0,stars);profile.unlocked=Math.max(profile.unlocked,Math.min(30,level+1));profile.completed=Object.keys(profile.stars).length;saveProfile();
+    }
+    if(mode==='daily'||mode==='practice'||(mode==='adventure'&&level>=LEVELS.length))return endGame(true);
+    showResults('level',entry);return;
+  }
+  if(!balls.length){
+    lives--;combo=0;shake=8;tone(110,.4,'sawtooth');log('life_lost',{lives});
+    const entry=finishAttempt();
+    if(lives<=0)return endGame(false);
+    balls=[newBall()];state='ready';wide=0;slow=0;
+    items=[];hud();showResults('life',entry);return;
+  }
+  hud();
+}
+function rr(x,y,w,h,r){ctx.beginPath();ctx.roundRect(x,y,w,h,r);ctx.fill()}
+function draw(){
+  ctx.setTransform(1,0,0,1,0,0);ctx.clearRect(0,0,W,H);
+  if(mode==='daily')drawDailyScene();
+  ctx.translate((Math.random()-.5)*shake,(Math.random()-.5)*shake);
+  bricks.forEach(b=>{
+    if(!b.alive)return;
+    ctx.fillStyle=mode==='daily'?dailyTheme(dailyRunDate).colors[b.r%3]:b.key?'#70e6cb':b.shield&&bricks.some(k=>k.alive&&k.key)?'#607896':b.boss?'#f0bc59':b.ex?'#ff5a36':(b.hp>1?(TOUGH[b.hp]||'#f0bc59'):COLORS[b.r%6]);rr(b.x,b.y,BW,BH,6);
+    if(mode==='daily'&&b.hp>1){ctx.fillStyle='#111b3b';ctx.fillRect(b.x+8,b.y+8,4,6);ctx.fillRect(b.x+16,b.y+8,4,6)}
+    if(b.target||b.core){ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.strokeRect(b.x+2,b.y+2,BW-4,BH-4);ctx.fillStyle='#111b3b';ctx.font='bold 15px sans-serif';ctx.textAlign='center';ctx.fillText(b.core?'CORE '+b.hp:'★',b.x+BW/2,b.y+17)}
+    if(b.key||b.boss||(b.shield&&bricks.some(k=>k.alive&&k.key))){ctx.fillStyle='#10172d';ctx.font='bold 14px sans-serif';ctx.textAlign='center';ctx.fillText(b.key?'KEY':b.boss?b.hp:'◆',b.x+BW/2,b.y+16)}
+    if(b.ex){ctx.fillStyle='#fff';ctx.font='bold 16px sans-serif';ctx.textAlign='center';ctx.fillText('✸',b.x+BW/2,b.y+17)}
+  });
+  items.forEach(i=>{
+    ctx.fillStyle='#4ade80';rr(i.x-14,i.y-9,28,18,9);
+    ctx.fillStyle='#0e0c22';ctx.font='bold 14px sans-serif';ctx.textAlign='center';ctx.fillText(i.k,i.x,i.y+5);
+  });
+  parts.forEach(p=>{ctx.globalAlpha=p.life/26;ctx.fillStyle=p.color;ctx.fillRect(p.x,p.y,4,4)});
+  ctx.globalAlpha=1;
+  ctx.fillStyle=wide>0?'#4ade80':'#f1f0fa';rr(paddle.x,paddle.y,paddle.w,paddle.h,7);
+  balls.forEach(b=>{
+    b.trail.forEach((t,i)=>{ctx.globalAlpha=i/16;ctx.fillStyle=skinColor();ctx.beginPath();ctx.arc(t[0],t[1],9*i/8,0,7);ctx.fill()});
+    ctx.globalAlpha=1;ctx.fillStyle=slow>0?'#38bdf8':skinColor();ctx.beginPath();ctx.arc(b.x,b.y,9,0,7);ctx.fill();
+  });
+  if(state!=='play'){
+    ctx.setTransform(1,0,0,1,0,0);
+    if(state!=='ready'){ctx.fillStyle='rgba(14,12,34,.65)';ctx.fillRect(0,0,W,H)}
+    ctx.fillStyle='#f1f0fa';ctx.textAlign='center';ctx.font='bold 30px "Trebuchet MS",Verdana,sans-serif';
+    const m={ready:'Tap or Space to launch',paused:'Paused',won:'You won! Score '+score,lost:'Game over. Score '+score}[state];
+    ctx.fillText(m||'Your results are ready',W/2,H/2+60);
+    if(state!=='ready'){ctx.font='18px "Trebuchet MS",Verdana,sans-serif';ctx.fillText('Best '+best+'. Press Restart to play again',W/2,H/2+92)}
+  }
+}
+function move(x){const r=cv.getBoundingClientRect();paddle.x=Math.max(0,Math.min(W-paddle.w,(x-r.left)*(W/r.width)-paddle.w/2))}
+cv.addEventListener('mousemove',e=>move(e.clientX));
+cv.addEventListener('touchmove',e=>move(e.touches[0].clientX),{passive:true});
+cv.addEventListener('touchstart',e=>{move(e.touches[0].clientX);if(state==='ready')launch()},{passive:true});
+cv.addEventListener('click',()=>{if(state==='ready')launch()});
+document.getElementById('mute').onclick=e=>{muted=!muted;e.target.textContent='Sound: '+(muted?'off':'on')};
+document.getElementById('adventure').onclick=()=>startGame('adventure',profile.adventureLevel||profile.unlocked);
+document.getElementById('daily').onclick=()=>startGame('daily');
+document.getElementById('tomorrow-preview').onclick=()=>startGame('daily',1,true);
+document.getElementById('daily-accept').onclick=()=>startGame('daily');
+function dismissDaily(){dailyInvite.close();renderHome();home.showModal()}
+document.getElementById('daily-later').onclick=dismissDaily;
+dailyInvite.addEventListener('cancel',e=>{e.preventDefault();dismissDaily()});
+window.addEventListener('focus',()=>{if(home.open){renderHome();maybeDailyInvite()}});
+setInterval(()=>{if(home.open){renderHome();maybeDailyInvite()}},30000);
+document.getElementById('menu-button').onclick=openHome;
+document.getElementById('results-home').onclick=()=>{saveDailyRun();state='summary';openHome()};
+document.getElementById('pause-home').onclick=openHome;
+document.getElementById('pause').onclick=togglePause;
+document.getElementById('resume').onclick=togglePause;
+const endDailyDialog=document.getElementById('end-daily-dialog');let abandonFrom='ready';
+function askEndDaily(){if(mode!=='daily'||dailyPreview||dailyDone[dailyRunDate])return;abandonFrom=state;state='paused';held.clear();endDailyDialog.showModal()}
+function cancelEndDaily(){endDailyDialog.close();state=abandonFrom;lastTick=performance.now()}
+document.getElementById('daily-end').onclick=askEndDaily;document.getElementById('daily-end-paused').onclick=askEndDaily;
+document.getElementById('end-daily-cancel').onclick=cancelEndDaily;
+endDailyDialog.addEventListener('cancel',e=>{e.preventDefault();cancelEndDaily()});
+document.getElementById('end-daily-confirm').onclick=()=>{endDailyDialog.close();if(pauseScreen.open)pauseScreen.close();if(results.open)results.close();if(pendingResult!=='life')finishAttempt();endGame(false);document.getElementById('result-sub').textContent='Daily run ended · '+score+' points. A fresh challenge arrives tomorrow.'};
+window.addEventListener('pagehide',saveDailyRun);
+document.getElementById('worlds').onclick=e=>{const b=e.target.closest('[data-level]');if(b&&!b.disabled)startGame('adventure',+b.dataset.level)};
+document.getElementById('closet').onclick=e=>{const b=e.target.closest('[data-skin]');if(b&&!b.disabled){profile.skin=b.dataset.skin;saveProfile();renderHome()}};
+document.getElementById('practice').onclick=()=>{const m=lastReport.stats.misses;practiceSide=m.indexOf(Math.max(...m));startGame('practice',1)};
+document.getElementById('revive').onclick=()=>{if(reviveUsed||pendingResult!=='lost')return;reviveUsed=true;results.close();pendingResult=null;lives=1;balls=[newBall()];items=[];wide=0;slow=0;combo=0;startAttempt();state='ready';hud();cv.focus()};
+home.addEventListener('cancel',e=>e.preventDefault());pauseScreen.addEventListener('cancel',e=>{e.preventDefault();togglePause()});
+document.addEventListener('visibilitychange',()=>{if(document.hidden&&state==='play'&&!results.open&&!home.open&&!pauseScreen.open)togglePause()});
+const held=new Set();
+document.addEventListener('keydown',e=>{if(home.open||results.open)return;if(['ArrowLeft','ArrowRight',' '].includes(e.key))e.preventDefault();if(e.key.toLowerCase()==='p'||e.key==='Escape'){if(!e.repeat)togglePause();return}if(pauseScreen.open)return;held.add(e.key);if(e.key===' '&&state==='ready')launch()});
+document.addEventListener('keyup',e=>held.delete(e.key));
+window.addEventListener('blur',()=>{held.clear();if(state==='play'&&!home.open&&!results.open&&!pauseScreen.open)togglePause()});
+startLevel=profile.adventureLevel||profile.unlocked;reset();state='menu';renderHome();home.showModal();maybeDailyInvite();
+function drawDailyScene(){
+ const theme=dailyTheme(dailyRunDate);ctx.fillStyle=theme.bg;ctx.fillRect(0,0,W,H);ctx.save();ctx.globalAlpha=.18;ctx.strokeStyle=theme.accent;ctx.fillStyle=theme.accent;ctx.lineWidth=2;
+ if(theme.motif==='sun'||theme.motif==='moon'||theme.motif==='orbit'){ctx.beginPath();ctx.arc(570,305,theme.motif==='moon'?68:92,0,Math.PI*2);ctx.stroke();ctx.beginPath();ctx.arc(570,305,theme.motif==='orbit'?115:48,0,Math.PI*2);ctx.stroke();if(theme.motif==='orbit'){ctx.beginPath();ctx.ellipse(570,305,145,35,-.4,0,Math.PI*2);ctx.stroke()}}
+ else if(theme.motif==='grid'){for(let x=0;x<W;x+=40){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke()}for(let y=0;y<H;y+=40){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke()}}
+ else{for(let row=0;row<5;row++){ctx.beginPath();for(let x=0;x<=W;x+=8){const y=260+row*30+Math.sin(x/90+row)*18;if(x===0)ctx.moveTo(x,y);else ctx.lineTo(x,y)}ctx.stroke()}}
+ ctx.globalAlpha=.3;for(let i=0;i<30;i++){const x=(i*137+hashDay(dailyRunDate)%100)%W,y=(i*73)%H;ctx.fillRect(x,y,i%3+1,i%3+1)}ctx.restore();
+}
+let accumulator=0,previousFrame=0;
+function loop(now){const elapsed=previousFrame?Math.min((now-previousFrame)/1000,.05):0;previousFrame=now;accumulator+=elapsed;
+ while(accumulator>=1/60){if(!home.open&&!results.open&&!pauseScreen.open&&(state==='play'||state==='ready')){if(held.has('ArrowLeft'))paddle.x=Math.max(0,paddle.x-7);if(held.has('ArrowRight'))paddle.x=Math.min(W-paddle.w,paddle.x+7)}update();accumulator-=1/60}draw();requestAnimationFrame(loop)}requestAnimationFrame(loop);
+</script>
+</body>
+</html>
